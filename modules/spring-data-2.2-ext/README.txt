@@ -1,7 +1,7 @@
 Apache Ignite Spring Module
 ---------------------------
 
-Apache Ignite Spring Data 2.2 module provides an integration with Spring Data 2.2 framework.
+Apache Ignite Spring Data 2.2 extension provides an integration with Spring Data 2.2 framework.
 
 Main features:
 
@@ -18,12 +18,12 @@ Main features:
 - Advanced SpEL expressions: While advanced parameter binding is a very useful feature, the real power of SpEL stems from the fact, that the expressions can refer to framework abstractions or other application components through SpEL EvaluationContext extension model.
 - Supports SpEL expressions into Text queries (TextQuery).
 
-Importing Spring Data 2.2 Module In Maven Project
+Importing Spring Data 2.2 extension In Maven Project
 ----------------------------------------
 
-If you are using Maven to manage dependencies of your project, you can add Spring module
+If you are using Maven to manage dependencies of your project, you can add Spring Data 2.2 extension
 dependency like this (replace '${ignite-spring-data_2.2-ext.version}' with actual version of Ignite Spring Data 2.2
-integration you are interested in):
+extension you are interested in):
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -34,7 +34,7 @@ integration you are interested in):
         ...
         <dependency>
             <groupId>org.apache.ignite</groupId>
-            <artifactId>ignite-spring-data_2.2</artifactId>
+            <artifactId>ignite-spring-data_2.2-ext</artifactId>
             <version>${ignite-spring-data_2.2-ext.version}</version>
         </dependency>
         ...
