@@ -15,11 +15,8 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.testsuites;
+package org.apache.ignite.springdata20;
 
-import org.apache.ignite.springdata20.IgniteSpringDataCrudSelfExpressionTest;
-import org.apache.ignite.springdata20.IgniteSpringDataCrudSelfTest;
-import org.apache.ignite.springdata20.IgniteSpringDataQueriesSelfTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
