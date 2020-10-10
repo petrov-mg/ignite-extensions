@@ -55,9 +55,9 @@
         <module>modules/camel-ext</module>
         <module>modules/jms11-ext</module>
         <module>modules/kafka-ext</module>
-        <module>modules/spring-data</module>
-        <module>modules/spring-data-2.0</module>
-        <module>modules/spring-data-2.2</module>
+        <module>modules/spring-data-ext</module>
+        <module>modules/spring-data-2.0-ext</module>
+        <module>modules/spring-data-2.2-ext</module>
     </modules>
 
     <profiles>
