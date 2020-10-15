@@ -19,12 +19,16 @@ package org.apache.ignite.springdata22.misc;
 
 import org.apache.ignite.Ignite;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.ClientConfiguration;
+import org.apache.ignite.configuration.ClientConnectorConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.springdata22.misc.SampleEvaluationContextExtension.SamplePassParamExtension;
 import org.apache.ignite.springdata22.repository.config.EnableIgniteRepositories;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
@@ -38,6 +42,9 @@ public class ApplicationConfiguration {
 
     /** */
     public static final String IGNITE_INSTANCE_TWO = "IGNITE_INSTANCE_TWO";
+
+    /** Port number on which server node listens for client сonnections. */
+    public static final int CLI_CONNECTOR_PORT = 10800;
 
     /**
      * The bean with cache names
@@ -84,6 +91,8 @@ public class ApplicationConfiguration {
 
         cfg.setDiscoverySpi(spi);
 
+        cfg.setClientConnectorConfiguration(new ClientConnectorConfiguration().setPort(CLI_CONNECTOR_PORT));
+
         return Ignition.start(cfg);
     }
 
@@ -109,5 +118,12 @@ public class ApplicationConfiguration {
         cfg.setDiscoverySpi(spi);
 
         return Ignition.start(cfg);
+    }
+
+    /** Ignite client instance. */
+    @Bean
+    public IgniteClient igniteClient(@Qualifier("igniteInstance") Ignite ignite) {
+        return Ignition.startClient(new ClientConfiguration()
+            .setAddresses("127.0.0.1:" + CLI_CONNECTOR_PORT));
     }
 }

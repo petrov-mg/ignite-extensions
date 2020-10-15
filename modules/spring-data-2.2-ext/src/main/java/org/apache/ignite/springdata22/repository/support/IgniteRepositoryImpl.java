@@ -47,12 +47,12 @@ public class IgniteRepositoryImpl<V, K extends Serializable> implements IgniteRe
     /**
      * Ignite Cache bound to the repository
      */
-    private final IgniteCache<K, V> cache;
+    private final IgniteCacheProxy<K, V> cache;
 
     /**
      * Ignite instance bound to the repository
      */
-    private final Ignite ignite;
+    private final IgniteProxy ignite;
 
     /**
      * Repository constructor.
@@ -60,19 +60,19 @@ public class IgniteRepositoryImpl<V, K extends Serializable> implements IgniteRe
      * @param ignite the ignite
      * @param cache  Initialized cache instance.
      */
-    public IgniteRepositoryImpl(Ignite ignite, IgniteCache<K, V> cache) {
+    public IgniteRepositoryImpl(IgniteProxy ignite, IgniteCacheProxy<K, V> cache) {
         this.cache = cache;
         this.ignite = ignite;
     }
 
     /** {@inheritDoc} */
     @Override public IgniteCache<K, V> cache() {
-        return cache;
+        return cache instanceof IgniteCacheProxyImpl ? ((IgniteCacheProxyImpl<K, V>)cache).delegate() : null;
     }
 
     /** {@inheritDoc} */
     @Override public Ignite ignite() {
-        return ignite;
+        return ignite instanceof IgniteProxyImpl ? ((IgniteProxyImpl)ignite).delegate() : null;
     }
 
     /** {@inheritDoc} */
