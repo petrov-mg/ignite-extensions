@@ -144,4 +144,5 @@ fabric.properties
 .classpath
 
 # Ignite work folder
-ignite/
+**/ignite/work/
+**/ignite/README.txt
