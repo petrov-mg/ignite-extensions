@@ -21,10 +21,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import javax.cache.Cache;
+import org.apache.ignite.springdata20.misc.AbstractPersonRepository;
 import org.apache.ignite.springdata20.misc.ApplicationConfiguration;
+import org.apache.ignite.springdata20.misc.IgnitePersonRepository;
 import org.apache.ignite.springdata20.misc.Person;
 import org.apache.ignite.springdata20.misc.PersonProjection;
-import org.apache.ignite.springdata20.misc.PersonRepository;
 import org.apache.ignite.springdata20.misc.PersonRepositoryOtherIgniteInstance;
 import org.apache.ignite.springdata20.misc.PersonSecondRepository;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
@@ -39,23 +40,23 @@ import org.springframework.data.domain.Sort;
  */
 public class IgniteSpringDataQueriesSelfTest extends GridCommonAbstractTest {
     /** Repository. */
-    private static PersonRepository repo;
+    protected static AbstractPersonRepository repo;
 
     /** Repository 2. */
-    private static PersonSecondRepository repo2;
+    protected static PersonSecondRepository repo2;
 
     /**
      * Repository Ignite Instance cluster TWO.
      */
-    private static PersonRepositoryOtherIgniteInstance repoTWO;
+    protected static PersonRepositoryOtherIgniteInstance repoTWO;
 
     /** Context. */
-    private static AnnotationConfigApplicationContext ctx;
+    protected static AnnotationConfigApplicationContext ctx;
 
     /**
      * Number of entries to store
      */
-    private static int CACHE_SIZE = 1000;
+    protected static int CACHE_SIZE = 1000;
 
     /**
      * Performs context initialization before tests.
@@ -69,7 +70,7 @@ public class IgniteSpringDataQueriesSelfTest extends GridCommonAbstractTest {
 
         ctx.refresh();
 
-        repo = ctx.getBean(PersonRepository.class);
+        repo = ctx.getBean(IgnitePersonRepository.class);
         repo2 = ctx.getBean(PersonSecondRepository.class);
         // repository on another ignite instance (and another cluster)
         repoTWO = ctx.getBean(PersonRepositoryOtherIgniteInstance.class);

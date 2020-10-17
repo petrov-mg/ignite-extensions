@@ -27,7 +27,9 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
     IgniteSpringDataCrudSelfTest.class,
     IgniteSpringDataQueriesSelfTest.class,
-    IgniteSpringDataCrudSelfExpressionTest.class
+    IgniteSpringDataCrudSelfExpressionTest.class,
+    IgniteClientSpringDataCrudSelfTest.class,
+    IgniteClientSpringDataQueriesSelfTest.class
 })
 public class IgniteSpringData22TestSuite {
 }

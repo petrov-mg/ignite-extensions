@@ -15,21 +15,12 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.springdata;
+package org.apache.ignite.springdata22.misc;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.apache.ignite.client.IgniteClient;
+import org.apache.ignite.springdata22.repository.config.RepositoryConfig;
 
-/**
- * Ignite Spring Data test suite.
- */
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-    IgniteSpringDataCrudSelfTest.class,
-    IgniteSpringDataQueriesSelfTest.class,
-    IgniteClientSpringDataCrudSelfTest.class,
-    IgniteClientSpringDataQueriesSelfTest.class
-})
-public class IgniteSpringDataTestSuite {
+/** Reperesents repository for testing Ignite Spring Data integration through {@link IgniteClient}. */
+@RepositoryConfig(cacheName = "PersonCache")
+public interface IgniteClientPersonRepository extends AbstractPersonRepository {
 }
-

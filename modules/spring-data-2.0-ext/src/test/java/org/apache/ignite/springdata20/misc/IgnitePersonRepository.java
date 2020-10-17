@@ -15,21 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.springdata;
+package org.apache.ignite.springdata20.misc;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import java.util.List;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.springdata20.repository.config.Query;
+import org.apache.ignite.springdata20.repository.config.RepositoryConfig;
+import org.springframework.data.repository.query.Param;
 
 /**
- * Ignite Spring Data test suite.
+ * Repository that extends common operations with those that are only available when the {@link Ignite} node is
+ * used to access the Ignite cluster.
  */
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-    IgniteSpringDataCrudSelfTest.class,
-    IgniteSpringDataQueriesSelfTest.class,
-    IgniteClientSpringDataCrudSelfTest.class,
-    IgniteClientSpringDataQueriesSelfTest.class
-})
-public class IgniteSpringDataTestSuite {
+@RepositoryConfig(cacheName = "PersonCache")
+public interface IgnitePersonRepository extends AbstractPersonRepository {
+    /** */
+    @Query(textQuery = true, value = "#{#firstname}", limit = 2)
+    public List<PersonProjection> textQueryByFirstNameWithProjectionNamedParameter(@Param("firstname") String val);
 }
-
