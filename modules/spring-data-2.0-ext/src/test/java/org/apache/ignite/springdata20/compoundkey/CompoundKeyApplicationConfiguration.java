@@ -17,8 +17,17 @@
 
 package org.apache.ignite.springdata20.compoundkey;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.cache.QueryEntity;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.springdata20.repository.config.EnableIgniteRepositories;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +43,11 @@ public class CompoundKeyApplicationConfiguration {
      * */
     @Bean
     public Ignite igniteInstance() {
-        return Ignition.start();
+        return Ignition.start(new IgniteConfiguration()
+            .setIgniteInstanceName("test-node")
+            .setDiscoverySpi(new TcpDiscoverySpi().setIpFinder(new TcpDiscoveryVmIpFinder(true)))
+            .setCacheConfiguration(new CacheConfiguration<>("City")
+                .setSqlSchema("TEST")
+                .setIndexedTypes(CityKey.class, City.class)));
     }
 }

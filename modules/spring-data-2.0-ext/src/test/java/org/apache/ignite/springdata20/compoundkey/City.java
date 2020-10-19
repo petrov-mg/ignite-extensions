@@ -18,18 +18,25 @@
 package org.apache.ignite.springdata20.compoundkey;
 
 import java.util.Objects;
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 /**
  * Value-class
  * */
 public class City {
+    /** City key. */
+    private CityKey key;
+
     /** City name */
+    @QuerySqlField
     private String name;
 
     /** City district */
+    @QuerySqlField
     private String district;
 
     /** City population */
+    @QuerySqlField
     private int population;
 
     /**

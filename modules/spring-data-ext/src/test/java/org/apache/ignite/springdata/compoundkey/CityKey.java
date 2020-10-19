@@ -20,13 +20,16 @@ package org.apache.ignite.springdata.compoundkey;
 import java.io.Serializable;
 import java.util.Objects;
 import org.apache.ignite.cache.affinity.AffinityKeyMapped;
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 /** Compound key for city class  */
 public class CityKey implements Serializable {
     /** city identifier */
+    @QuerySqlField
     private int ID;
 
     /** affinity key countrycode  */
+    @QuerySqlField
     @AffinityKeyMapped
     private String COUNTRYCODE;
 

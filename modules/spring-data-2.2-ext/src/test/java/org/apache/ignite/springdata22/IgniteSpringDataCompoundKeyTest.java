@@ -20,7 +20,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Optional;
-import org.apache.ignite.Ignite;
 import org.apache.ignite.springdata22.compoundkey.City;
 import org.apache.ignite.springdata22.compoundkey.CityKey;
 import org.apache.ignite.springdata22.compoundkey.CityRepository;
@@ -96,22 +95,15 @@ public class IgniteSpringDataCompoundKeyTest extends GridCommonAbstractTest {
 
     /** load data*/
     public void loadData() throws Exception {
-        Ignite ignite = ctx.getBean(Ignite.class);
-
-        if (ignite.cacheNames().contains(CACHE_NAME))
-            ignite.destroyCache(CACHE_NAME);
-
         try (Connection conn = DriverManager.getConnection("jdbc:ignite:thin://127.0.0.1/")) {
             Statement st = conn.createStatement();
 
-            st.execute("DROP TABLE IF EXISTS City");
-            st.execute("CREATE TABLE City (ID INT, Name VARCHAR, CountryCode CHAR(3), District VARCHAR, Population INT, PRIMARY KEY (ID, CountryCode)) WITH \"template=partitioned, backups=1, affinityKey=CountryCode, CACHE_NAME=City, KEY_TYPE=org.apache.ignite.springdata22.compoundkey.CityKey, VALUE_TYPE=org.apache.ignite.springdata22.compoundkey.City\"");
             st.execute("SET STREAMING ON;");
-            st.execute("INSERT INTO City(ID, Name, CountryCode, District, Population) VALUES (1,'Kabul','AFG','Kabol',1780000)");
-            st.execute("INSERT INTO City(ID, Name, CountryCode, District, Population) VALUES (2,'Qandahar','AFG','Qandahar',237500)");
-            st.execute("INSERT INTO City(ID, Name, CountryCode, District, Population) VALUES (3,'Herat','AFG','Herat',186800)");
-            st.execute("INSERT INTO City(ID, Name, CountryCode, District, Population) VALUES (4,'Mazar-e-Sharif','AFG','Balkh',127800)");
-            st.execute("INSERT INTO City(ID, Name, CountryCode, District, Population) VALUES (5,'Amsterdam','NLD','Noord-Holland',731200)");
+            st.execute("INSERT INTO TEST.City(ID, Name, CountryCode, District, Population) VALUES (1,'Kabul','AFG','Kabol',1780000)");
+            st.execute("INSERT INTO TEST.City(ID, Name, CountryCode, District, Population) VALUES (2,'Qandahar','AFG','Qandahar',237500)");
+            st.execute("INSERT INTO TEST.City(ID, Name, CountryCode, District, Population) VALUES (3,'Herat','AFG','Herat',186800)");
+            st.execute("INSERT INTO TEST.City(ID, Name, CountryCode, District, Population) VALUES (4,'Mazar-e-Sharif','AFG','Balkh',127800)");
+            st.execute("INSERT INTO TEST.City(ID, Name, CountryCode, District, Population) VALUES (5,'Amsterdam','NLD','Noord-Holland',731200)");
         }
     }
 
