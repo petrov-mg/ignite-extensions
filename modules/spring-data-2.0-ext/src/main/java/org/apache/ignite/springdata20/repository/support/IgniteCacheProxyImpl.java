@@ -23,24 +23,23 @@ import java.util.Map;
 import java.util.Set;
 import javax.cache.Cache;
 import javax.cache.expiry.ExpiryPolicy;
+import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.CachePeekMode;
 import org.apache.ignite.cache.query.FieldsQueryCursor;
 import org.apache.ignite.cache.query.Query;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.ScanQuery;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
-import org.apache.ignite.client.ClientCache;
 import org.apache.ignite.client.ClientException;
-import org.apache.ignite.client.IgniteClient;
 import org.jetbrains.annotations.NotNull;
 
 /** */
-public class IgniteCacheClientProxy<K, V> implements IgniteCacheProxy<K, V> {
-    /** {@link IgniteClient} instance that is used as a delegate. */
-    private final ClientCache<K, V> cache;
+public class IgniteCacheProxyImpl<K, V> implements IgniteCacheProxy<K, V> {
+    /** */
+    private final IgniteCache<K, V> cache;
 
     /** */
-    public IgniteCacheClientProxy(ClientCache<K, V> cache) {
+    public IgniteCacheProxyImpl(IgniteCache<K, V> cache) {
         this.cache = cache;
     }
 
@@ -86,7 +85,7 @@ public class IgniteCacheClientProxy<K, V> implements IgniteCacheProxy<K, V> {
 
     /** {@inheritDoc} */
     @Override public IgniteCacheProxy<K, V> withExpiryPolicy(ExpiryPolicy expirePlc) {
-        return new IgniteCacheClientProxy<>(cache.withExpirePolicy(expirePlc));
+        return new IgniteCacheProxyImpl<>(cache.withExpiryPolicy(expirePlc));
     }
 
     /** {@inheritDoc} */
@@ -107,5 +106,10 @@ public class IgniteCacheClientProxy<K, V> implements IgniteCacheProxy<K, V> {
     /** {@inheritDoc} */
     @Override public @NotNull Iterator<Cache.Entry<K, V>> iterator() {
         return cache.<Cache.Entry<K, V>>query(new ScanQuery<>()).getAll().iterator();
+    }
+
+    /** */
+    public IgniteCache<K, V> delegate() {
+        return cache;
     }
 }

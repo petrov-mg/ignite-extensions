@@ -17,25 +17,30 @@
 
 package org.apache.ignite.springdata20.repository.support;
 
-import org.apache.ignite.client.IgniteClient;
+import org.apache.ignite.Ignite;
 
-/** Represents {@link IgniteProxy} which delegates operations to {@link IgniteClient}. */
-public class IgniteClientProxy implements IgniteProxy {
-    /** {@link IgniteClient} instance that is used as a delegate. */
-    private final IgniteClient cli;
+/** */
+public class IgniteProxyImpl implements IgniteProxy {
+    /** */
+    private final Ignite ignite;
 
     /** */
-    public IgniteClientProxy(IgniteClient cli) {
-        this.cli = cli;
+    public IgniteProxyImpl(Ignite ignite) {
+        this.ignite = ignite;
     }
 
     /** {@inheritDoc} */
     @Override public <K, V> IgniteCacheProxy<K, V> getOrCreateCache(String name) {
-        return new IgniteCacheClientProxy<>(cli.getOrCreateCache(name));
+        return new IgniteCacheProxyImpl<>(ignite.getOrCreateCache(name));
     }
 
     /** {@inheritDoc} */
     @Override public <K, V> IgniteCacheProxy<K, V> cache(String name) {
-        return new IgniteCacheClientProxy<>(cli.cache(name));
+        return new IgniteCacheProxyImpl<>(ignite.cache(name));
+    }
+
+    /** */
+    public Ignite delegate() {
+        return ignite;
     }
 }

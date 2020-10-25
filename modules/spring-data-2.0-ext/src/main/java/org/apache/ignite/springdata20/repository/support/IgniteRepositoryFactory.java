@@ -80,7 +80,7 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
     private final Map<Class<?>, String> repoToCache = new HashMap<>();
 
     /** Mapping of a repository to a ignite instance. */
-    private final Map<Class<?>, Ignite> repoToIgnite = new HashMap<>();
+    private final Map<Class<?>, IgniteProxy> repoToIgnite = new HashMap<>();
 
     /**
      * Creates the factory with initialized {@link Ignite} instance.
@@ -96,12 +96,12 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
     }
 
     /** */
-    private Ignite igniteForRepoConfig(RepositoryConfig config) {
+    private IgniteProxy igniteForRepoConfig(RepositoryConfig config) {
         try {
             Object igniteInstanceBean = ctx.getBean(evaluateExpression(config.igniteInstance()));
 
             if (igniteInstanceBean instanceof Ignite)
-                return (Ignite)igniteInstanceBean;
+                return new IgniteProxyImpl((Ignite)igniteInstanceBean);
             else if (igniteInstanceBean instanceof IgniteClient)
                 return new IgniteClientProxy((IgniteClient)igniteInstanceBean);
 
@@ -115,18 +115,18 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
                 IgniteConfiguration cfg = (IgniteConfiguration)ctx.getBean(igniteConfigName);
                 try {
                     // first try to attach to existing ignite instance
-                    return Ignition.ignite(cfg.getIgniteInstanceName());
+                    return new IgniteProxyImpl(Ignition.ignite(cfg.getIgniteInstanceName()));
                 }
                 catch (Exception ignored) {
                     // nop
                 }
-                return Ignition.start(cfg);
+                return new IgniteProxyImpl((Ignition.start(cfg)));
             }
             catch (BeansException ex2) {
                 try {
                     String igniteSpringCfgPath = evaluateExpression(config.igniteSpringCfgPath());
                     String path = (String)ctx.getBean(igniteSpringCfgPath);
-                    return Ignition.start(path);
+                    return new IgniteProxyImpl((Ignition.start(path)));
                 }
                 catch (BeansException ex3) {
                     throw new IgniteException("Failed to initialize Ignite repository factory. Ignite instance or"
@@ -191,14 +191,14 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
     }
 
     /** Control underlying cache creation to avoid cache creation by mistake */
-    private IgniteCache getRepositoryCache(Class<?> repoIf) {
-        Ignite ignite = repoToIgnite.get(repoIf);
+    private IgniteCacheProxy<? ,? > getRepositoryCache(Class<?> repoIf) {
+        IgniteProxy ignite = repoToIgnite.get(repoIf);
 
         RepositoryConfig config = repoIf.getAnnotation(RepositoryConfig.class);
 
         String cacheName = repoToCache.get(repoIf);
 
-        IgniteCache c = config.autoCreateCache() ? ignite.getOrCreateCache(cacheName) : ignite.cache(cacheName);
+        IgniteCacheProxy<?, ?> c = config.autoCreateCache() ? ignite.getOrCreateCache(cacheName) : ignite.cache(cacheName);
 
         if (c == null) {
             throw new IllegalStateException(
@@ -213,7 +213,7 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
 
     /** {@inheritDoc} */
     @Override protected Object getTargetRepository(RepositoryInformation metadata) {
-        Ignite ignite = repoToIgnite.get(metadata.getRepositoryInterface());
+        IgniteProxy ignite = repoToIgnite.get(metadata.getRepositoryInterface());
 
         return getTargetRepositoryViaReflection(metadata, ignite,
             getRepositoryCache(metadata.getRepositoryInterface()));
