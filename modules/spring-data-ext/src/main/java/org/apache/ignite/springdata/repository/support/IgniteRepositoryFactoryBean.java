@@ -20,6 +20,7 @@ package org.apache.ignite.springdata.repository.support;
 import java.io.Serializable;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.springdata.repository.IgniteRepository;
 import org.springframework.beans.BeansException;
@@ -38,6 +39,7 @@ import org.springframework.data.repository.core.support.RepositoryFactorySupport
  * <li>{@link Ignite} instance bean named "igniteInstance"</li>
  * <li>{@link IgniteConfiguration} bean named "igniteCfg"</li>
  * <li>A path to Ignite's Spring XML configuration named "igniteSpringCfgPath"</li>
+ * <li>{@link IgniteClient} instance bean named "igniteInstance"</li>
  * <ul/>
  *
  * @param <T> Repository type, {@link IgniteRepository}
@@ -64,9 +66,16 @@ public class IgniteRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
     /** {@inheritDoc} */
     @Override protected RepositoryFactorySupport createRepositoryFactory() {
         try {
-            Ignite ignite = (Ignite)ctx.getBean("igniteInstance");
+            Object igniteInstanceBean = ctx.getBean("igniteInstance");
 
-            return new IgniteRepositoryFactory(ignite);
+            if (igniteInstanceBean instanceof Ignite)
+                return new IgniteRepositoryFactory((Ignite)igniteInstanceBean);
+            else if (igniteInstanceBean instanceof IgniteClient)
+                return new IgniteRepositoryFactory(new IgniteClientProxy((IgniteClient)igniteInstanceBean));
+
+            throw new IgniteException("Invalid repository configuration. The Spring Bean corresponding to the" +
+                " \"igniteInstance\" property of repository configuration must be one of the following types:" +
+                " \"org.apache.ignite.Ignite\", \"org.apache.ignite.client.IgniteClient\"");
         }
         catch (BeansException ex) {
             try {
