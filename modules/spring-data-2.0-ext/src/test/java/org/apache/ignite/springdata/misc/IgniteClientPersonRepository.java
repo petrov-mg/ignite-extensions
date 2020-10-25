@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,9 +17,10 @@
 
 package org.apache.ignite.springdata.misc;
 
-import org.apache.ignite.springdata22.repository.config.RepositoryConfig;
+import org.apache.ignite.client.IgniteClient;
+import org.apache.ignite.springdata20.repository.config.RepositoryConfig;
 
-/** */
-@RepositoryConfig(igniteInstance = "igniteInstanceTWO", cacheName = "PersonCache")
-public interface PersonRepositoryOtherIgniteInstance extends AbstractPersonRepository {
+/** Represents repository for testing Ignite Spring Data integration through {@link IgniteClient}. */
+@RepositoryConfig(cacheName = "PersonCache")
+public interface IgniteClientPersonRepository extends AbstractPersonRepository {
 }
