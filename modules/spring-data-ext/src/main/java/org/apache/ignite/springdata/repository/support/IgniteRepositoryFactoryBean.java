@@ -20,6 +20,7 @@ package org.apache.ignite.springdata.repository.support;
 import java.io.Serializable;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.springdata.repository.IgniteRepository;
 import org.springframework.beans.BeansException;
@@ -28,6 +29,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
+import org.springframework.util.Assert;
 
 /**
  * Apache Ignite repository factory bean.
@@ -38,6 +40,7 @@ import org.springframework.data.repository.core.support.RepositoryFactorySupport
  * <li>{@link Ignite} instance bean named "igniteInstance"</li>
  * <li>{@link IgniteConfiguration} bean named "igniteCfg"</li>
  * <li>A path to Ignite's Spring XML configuration named "igniteSpringCfgPath"</li>
+ * <li>{@link IgniteClient} instance bean named "igniteInstance"</li>
  * <ul/>
  *
  * @param <T> Repository type, {@link IgniteRepository}
@@ -64,9 +67,15 @@ public class IgniteRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
     /** {@inheritDoc} */
     @Override protected RepositoryFactorySupport createRepositoryFactory() {
         try {
-            Ignite ignite = (Ignite)ctx.getBean("igniteInstance");
+            Object clusterAccesser = ctx.getBean("igniteInstance");
 
-            return new IgniteRepositoryFactory(ignite);
+            Assert.isTrue(clusterAccesser instanceof IgniteClient || clusterAccesser instanceof Ignite,
+                "Invalid repository configuration. The Spring Bean corresponding to the" +
+                    " \"igniteInstance\" property of repository configuration must be one of the following types:" +
+                    " \"org.apache.ignite.Ignite\", \"org.apache.ignite.client.IgniteClient\"");
+
+            return new IgniteRepositoryFactory(clusterAccesser);
+
         }
         catch (BeansException ex) {
             try {

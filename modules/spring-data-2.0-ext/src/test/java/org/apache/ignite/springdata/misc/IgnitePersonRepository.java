@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,10 +17,19 @@
 
 package org.apache.ignite.springdata.misc;
 
-import org.apache.ignite.springdata22.repository.config.RepositoryConfig;
+import java.util.List;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.springdata20.repository.config.Query;
+import org.apache.ignite.springdata20.repository.config.RepositoryConfig;
+import org.springframework.data.repository.query.Param;
 
-/** Represents test repository with non-default {@link RepositoryConfig#igniteInstance} value. */
-@RepositoryConfig(igniteInstance = "igniteInstanceTWO", cacheName = "PersonCache")
-public interface PersonRepositoryOtherIgniteInstance extends AbstractPersonRepository {
-    // No-op.
+/**
+ * Repository that extends common operations with those that are only available when the {@link Ignite} node is
+ * used to access the Ignite cluster.
+ */
+@RepositoryConfig(cacheName = "PersonCache")
+public interface IgnitePersonRepository extends AbstractPersonRepository {
+    /** */
+    @Query(textQuery = true, value = "#{#firstname}", limit = 2)
+    public List<PersonProjection> textQueryByFirstNameWithProjectionNamedParameter(@Param("firstname") String val);
 }

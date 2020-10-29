@@ -23,6 +23,8 @@ import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.client.ClientCache;
+import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.springdata20.repository.IgniteRepository;
 import org.apache.ignite.springdata20.repository.config.DynamicQueryConfig;
@@ -31,6 +33,7 @@ import org.apache.ignite.springdata20.repository.config.RepositoryConfig;
 import org.apache.ignite.springdata20.repository.query.IgniteQuery;
 import org.apache.ignite.springdata20.repository.query.IgniteQueryGenerator;
 import org.apache.ignite.springdata20.repository.query.IgniteRepositoryQuery;
+import org.apache.ignite.springdata20.repository.query.IgniteRepositoryQuery.IgniteQueryExecutor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanExpressionContext;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -46,6 +49,8 @@ import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import static java.lang.String.format;
+
 /**
  * Crucial for spring-data functionality class. Create proxies for repositories.
  * <p>
@@ -57,6 +62,10 @@ import org.springframework.util.StringUtils;
  * @author Manuel Núñez (manuel.nunez@hawkore.com)
  */
 public class IgniteRepositoryFactory extends RepositoryFactorySupport {
+    /** Error message indicating that text queries are not supported. */
+    private static final String TEXT_QRY_UNSUPPORTED_ERR_MSG = "Invalid Spring Data query configuration for method" +
+        " %s#%s. Text queries are not suppported when a thin client is used to access the Ignite cluster.";
+
     /** Spring application context */
     private final ApplicationContext ctx;
 
@@ -72,8 +81,8 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
     /** Mapping of a repository to a cache. */
     private final Map<Class<?>, String> repoToCache = new HashMap<>();
 
-    /** Mapping of a repository to a ignite instance. */
-    private final Map<Class<?>, Ignite> repoToIgnite = new HashMap<>();
+    /** Mapping of a repository to an object instance that are used to access the Ignite cluster. */
+    private final Map<Class<?>, Object> repoToIgnite = new HashMap<>();
 
     /**
      * Creates the factory with initialized {@link Ignite} instance.
@@ -89,10 +98,9 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
     }
 
     /** */
-    private Ignite igniteForRepoConfig(RepositoryConfig config) {
+    private Object igniteForRepoConfig(RepositoryConfig config) {
         try {
-            String igniteInstanceName = evaluateExpression(config.igniteInstance());
-            return (Ignite)ctx.getBean(igniteInstanceName);
+            return ctx.getBean(evaluateExpression(config.igniteInstance()));
         }
         catch (BeansException ex) {
             try {
@@ -140,7 +148,8 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
 
     /** {@inheritDoc} */
     @Override protected Class<?> getRepositoryBaseClass(RepositoryMetadata metadata) {
-        return IgniteRepositoryImpl.class;
+        return repoToIgnite.get(metadata.getRepositoryInterface()) instanceof IgniteClient ?
+            IgniteClientRepository.class : IgniteRepositoryImpl.class;
     }
 
     /** {@inheritDoc} */
@@ -160,7 +169,14 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
 
         repoToCache.put(repoItf, cacheName);
 
-        repoToIgnite.put(repoItf, igniteForRepoConfig(annotation));
+        Object ignite = igniteForRepoConfig(annotation);
+
+        Assert.isTrue(ignite instanceof IgniteClient || ignite instanceof Ignite,
+            "Invalid repository configuration. The Spring Bean corresponding to the" +
+                " \"igniteInstance\" property of repository configuration must be one of the following types:" +
+                " \"org.apache.ignite.Ignite\", \"org.apache.ignite.client.IgniteClient\"");
+
+        repoToIgnite.put(repoItf, ignite);
 
         return super.getRepositoryMetadata(repoItf);
     }
@@ -176,16 +192,27 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
     }
 
     /** Control underlying cache creation to avoid cache creation by mistake */
-    private IgniteCache getRepositoryCache(Class<?> repoIf) {
-        Ignite ignite = repoToIgnite.get(repoIf);
+    private Object getRepositoryCache(Class<?> repoIf) {
+        Object ignite = repoToIgnite.get(repoIf);
 
         RepositoryConfig config = repoIf.getAnnotation(RepositoryConfig.class);
 
         String cacheName = repoToCache.get(repoIf);
 
-        IgniteCache c = config.autoCreateCache() ? ignite.getOrCreateCache(cacheName) : ignite.cache(cacheName);
+        Object cache;
 
-        if (c == null) {
+        if (ignite instanceof IgniteClient) {
+            IgniteClient cli = (IgniteClient)ignite;
+
+            cache = config.autoCreateCache() ? cli.getOrCreateCache(cacheName) : cli.cache(cacheName);
+        }
+        else {
+            Ignite node = (Ignite)ignite;
+
+            cache = config.autoCreateCache() ? node.getOrCreateCache(cacheName) : node.cache(cacheName);
+        }
+
+        if (cache == null) {
             throw new IllegalStateException(
                 "Cache '" + cacheName + "' not found for repository interface " + repoIf.getName()
                     + ". Please, add a cache configuration to ignite configuration"
@@ -193,15 +220,16 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
                     + ".repository.config.RepositoryConfig annotation.");
         }
 
-        return c;
+        return cache;
     }
 
     /** {@inheritDoc} */
     @Override protected Object getTargetRepository(RepositoryInformation metadata) {
-        Ignite ignite = repoToIgnite.get(metadata.getRepositoryInterface());
+        Object ignite = repoToIgnite.get(metadata.getRepositoryInterface());
 
-        return getTargetRepositoryViaReflection(metadata, ignite,
-            getRepositoryCache(metadata.getRepositoryInterface()));
+        return ignite instanceof IgniteClient ?
+            getTargetRepositoryViaReflection(metadata, getRepositoryCache(metadata.getRepositoryInterface())) :
+            getTargetRepositoryViaReflection(metadata, ignite, getRepositoryCache(metadata.getRepositoryInterface()));
     }
 
     /** {@inheritDoc} */
@@ -209,7 +237,14 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
         EvaluationContextProvider evaluationContextProvider) {
         return Optional.of((mtd, metadata, factory, namedQueries) -> {
             final Query annotation = mtd.getAnnotation(Query.class);
-            final Ignite ignite = repoToIgnite.get(metadata.getRepositoryInterface());
+
+            Object cache = getRepositoryCache(metadata.getRepositoryInterface());
+
+            boolean isClient = cache instanceof ClientCache;
+
+            IgniteQueryExecutor qryExec = isClient
+                ? ((ClientCache<?, ?>)cache)::query
+                : ((IgniteCache<?, ?>)cache)::query;
 
             if (annotation != null && (StringUtils.hasText(annotation.value()) || annotation.textQuery() || annotation
                 .dynamicQuery())) {
@@ -219,13 +254,19 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
                 boolean annotatedIgniteQuery = !annotation.dynamicQuery() && (StringUtils.hasText(qryStr) || annotation
                     .textQuery());
 
+                boolean isTextQry = annotation.textQuery();
+
+                if (isTextQry && isClient) {
+                    throw new IllegalStateException(
+                        format(TEXT_QRY_UNSUPPORTED_ERR_MSG, mtd.getDeclaringClass().getName(), mtd.getName()));
+                }
+
                 IgniteQuery query = annotatedIgniteQuery ? new IgniteQuery(qryStr,
                     !annotation.textQuery() && (isFieldQuery(qryStr) || annotation.forceFieldsQuery()),
-                    annotation.textQuery(), false, IgniteQueryGenerator.getOptions(mtd)) : null;
+                    isTextQry, false, IgniteQueryGenerator.getOptions(mtd)) : null;
 
                 if (key != QueryLookupStrategy.Key.CREATE) {
-                    return new IgniteRepositoryQuery(ignite, metadata, query, mtd, factory,
-                        getRepositoryCache(metadata.getRepositoryInterface()),
+                    return new IgniteRepositoryQuery(metadata, query, mtd, factory, qryExec,
                         annotatedIgniteQuery ? DynamicQueryConfig.fromQueryAnnotation(annotation) : null,
                         evaluationContextProvider);
                 }
@@ -237,8 +278,14 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
                     + ".config.Query annotation.");
             }
 
-            return new IgniteRepositoryQuery(ignite, metadata, IgniteQueryGenerator.generateSql(mtd, metadata), mtd,
-                factory, getRepositoryCache(metadata.getRepositoryInterface()),
+            IgniteQuery qry = IgniteQueryGenerator.generateSql(mtd, metadata);
+
+            if (qry.isTextQuery() && isClient) {
+                throw new IllegalStateException(
+                    format(TEXT_QRY_UNSUPPORTED_ERR_MSG, mtd.getDeclaringClass().getName(), mtd.getName()));
+            }
+
+            return new IgniteRepositoryQuery(metadata, qry, mtd, factory, qryExec,
                 DynamicQueryConfig.fromQueryAnnotation(annotation), evaluationContextProvider);
         });
     }

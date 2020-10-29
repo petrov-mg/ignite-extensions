@@ -23,7 +23,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.apache.ignite.springdata.repository.support.IgniteRepositoryFactoryBean;
-import org.apache.ignite.springdata.repository.support.IgniteRepositoryImpl;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
@@ -103,13 +102,6 @@ public @interface EnableIgniteRepositories {
      * @return {@link FactoryBean} class to be used for each repository instance.
      */
     Class<?> repositoryFactoryBeanClass() default IgniteRepositoryFactoryBean.class;
-
-    /**
-     * Configure the repository base class to be used to create repository proxies for this particular configuration.
-     *
-     * @return Repository base class to be used to create repository proxies for this particular configuration.
-     */
-    Class<?> repositoryBaseClass() default IgniteRepositoryImpl.class;
 
     /**
      * Configures whether nested repository-interfaces (e.g. defined as inner classes) should be discovered by the

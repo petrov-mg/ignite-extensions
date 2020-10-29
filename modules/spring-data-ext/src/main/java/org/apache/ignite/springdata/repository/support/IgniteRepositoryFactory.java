@@ -21,7 +21,10 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.client.ClientCache;
+import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.springdata.repository.IgniteRepository;
 import org.apache.ignite.springdata.repository.config.Query;
@@ -29,6 +32,7 @@ import org.apache.ignite.springdata.repository.config.RepositoryConfig;
 import org.apache.ignite.springdata.repository.query.IgniteQuery;
 import org.apache.ignite.springdata.repository.query.IgniteQueryGenerator;
 import org.apache.ignite.springdata.repository.query.IgniteRepositoryQuery;
+import org.apache.ignite.springdata.repository.query.IgniteRepositoryQuery.IgniteQueryExecutor;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.NamedQueries;
@@ -47,7 +51,7 @@ import org.springframework.util.StringUtils;
  */
 public class IgniteRepositoryFactory extends RepositoryFactorySupport {
     /** Ignite instance */
-    private Ignite ignite;
+    private Object ignite;
 
     /** Mapping of a repository to a cache. */
     private final Map<Class<?>, String> repoToCache = new HashMap<>();
@@ -57,7 +61,7 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
      *
      * @param ignite
      */
-    public IgniteRepositoryFactory(Ignite ignite) {
+    public IgniteRepositoryFactory(Object ignite) {
         this.ignite = ignite;
     }
 
@@ -96,7 +100,7 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
 
     /** {@inheritDoc} */
     @Override protected Class<?> getRepositoryBaseClass(RepositoryMetadata metadata) {
-        return IgniteRepositoryImpl.class;
+        return ignite instanceof IgniteClient ? IgniteClientRepository.class : IgniteRepositoryImpl.class;
     }
 
     /** {@inheritDoc} */
@@ -119,8 +123,7 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
 
     /** {@inheritDoc} */
     @Override protected Object getTargetRepository(RepositoryInformation metadata) {
-        return getTargetRepositoryViaReflection(metadata,
-            ignite.getOrCreateCache(repoToCache.get(metadata.getRepositoryInterface())));
+        return getTargetRepositoryViaReflection(metadata, getRepositoryCache(metadata.getRepositoryInterface()));
     }
 
     /** {@inheritDoc} */
@@ -133,13 +136,19 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
 
                 final Query annotation = mtd.getAnnotation(Query.class);
 
+                Object cache = getRepositoryCache(metadata.getRepositoryInterface());
+
+                IgniteQueryExecutor qryExec = cache instanceof ClientCache
+                    ? ((ClientCache<?, ?>)cache)::query
+                    : ((IgniteCache<?, ?>)cache)::query;
+
                 if (annotation != null) {
                     String qryStr = annotation.value();
 
                     if (key != Key.CREATE && StringUtils.hasText(qryStr))
                         return new IgniteRepositoryQuery(metadata,
                             new IgniteQuery(qryStr, isFieldQuery(qryStr), IgniteQueryGenerator.getOptions(mtd)),
-                            mtd, factory, ignite.getOrCreateCache(repoToCache.get(metadata.getRepositoryInterface())));
+                            mtd, factory, qryExec);
                 }
 
                 if (key == QueryLookupStrategy.Key.USE_DECLARED_QUERY)
@@ -147,7 +156,7 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
                         "a query string via org.apache.ignite.springdata.repository.config.Query annotation.");
 
                 return new IgniteRepositoryQuery(metadata, IgniteQueryGenerator.generateSql(mtd, metadata), mtd,
-                    factory, ignite.getOrCreateCache(repoToCache.get(metadata.getRepositoryInterface())));
+                    factory, qryExec);
             }
         };
     }
@@ -158,6 +167,20 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
      */
     private boolean isFieldQuery(String qry) {
         return qry.matches("^SELECT.*") && !qry.matches("^SELECT\\s+(?:\\w+\\.)?+\\*.*");
+    }
+
+    /**
+     * Obtains cache instance bound to specified repository.
+     *
+     * @param repoInteraface Class of the repository.
+     * @return Cache instance.
+     */
+    private Object getRepositoryCache(Class<?> repoInteraface) {
+        String cacheName = repoToCache.get(repoInteraface);
+
+        return ignite instanceof IgniteClient ?
+            ((IgniteClient)ignite).getOrCreateCache(cacheName) :
+            ((Ignite)ignite).getOrCreateCache(cacheName);
     }
 }
 

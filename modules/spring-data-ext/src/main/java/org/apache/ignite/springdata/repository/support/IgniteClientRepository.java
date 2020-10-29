@@ -14,34 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.ignite.springdata.repository.support;
 
 import java.io.Serializable;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import javax.cache.Cache;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.CachePeekMode;
+import org.apache.ignite.cache.query.ScanQuery;
+import org.apache.ignite.client.ClientCache;
 import org.apache.ignite.springdata.repository.IgniteRepository;
 
-import static java.util.Collections.emptySet;
+import static org.apache.ignite.springdata.repository.support.IgniteRepositoryImpl.toSet;
 
-/**
- * General Apache Ignite repository implementation.
- */
-public class IgniteRepositoryImpl<T, ID extends Serializable> implements IgniteRepository<T, ID> {
-    /** Ignite Cache bound to the repository */
-    private final IgniteCache<ID, T> cache;
+/** Represents implementation of {@link IgniteRepository} in which Ignite thin client is used to access the cluster. */
+public class IgniteClientRepository<T, ID extends Serializable> implements IgniteRepository<T, ID> {
+    /** {@link IgniteCache} bound to the repository. */
+    private final ClientCache<ID, T> cache;
 
-    /**
-     * Repository constructor.
-     *
-     * @param cache Initialized cache instance.
-     */
-    public IgniteRepositoryImpl(IgniteCache<ID, T> cache) {
+    /** */
+    public IgniteClientRepository(ClientCache<ID, T> cache) {
         this.cache = cache;
     }
 
@@ -81,7 +75,7 @@ public class IgniteRepositoryImpl<T, ID extends Serializable> implements IgniteR
 
     /** {@inheritDoc} */
     @Override public Iterable<T> findAll() {
-        final Iterator<Cache.Entry<ID, T>> iter = cache.iterator();
+        final Iterator<Cache.Entry<ID, T>> iter = cache.<Cache.Entry<ID, T>>query(new ScanQuery<>()).getAll().iterator();
 
         return new Iterable<T>() {
             @Override public Iterator<T> iterator() {
@@ -100,34 +94,6 @@ public class IgniteRepositoryImpl<T, ID extends Serializable> implements IgniteR
                 };
             }
         };
-    }
-
-    /**
-     * @param ids Collection of IDs.
-     * @return Collection transformed to set.
-     */
-    static <T> Set<T> toSet(Iterable<T> ids) {
-        if (ids instanceof Set)
-            return (Set<T>)ids;
-
-        Iterator<T> itr = ids.iterator();
-
-        if (!itr.hasNext())
-            return emptySet();
-
-        T key = itr.next();
-
-        Set<T> keys = key instanceof Comparable ? new TreeSet<>() : new HashSet<>();
-
-        keys.add(key);
-
-        while (itr.hasNext()) {
-            key = itr.next();
-
-            keys.add(key);
-        }
-
-        return keys;
     }
 
     /** {@inheritDoc} */

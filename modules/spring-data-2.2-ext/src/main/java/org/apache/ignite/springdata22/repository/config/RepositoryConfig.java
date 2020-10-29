@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.ignite.springdata22.repository.config;
 
 import java.lang.annotation.Documented;
@@ -25,6 +24,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.apache.ignite.Ignite;
+import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.configuration.IgniteConfiguration;
 
 /**
@@ -46,9 +46,8 @@ public @interface RepositoryConfig {
     String cacheName() default "";
 
     /**
-     * Ignite instance string. Default "igniteInstance".
-     *
-     * @return {@link Ignite} instance spring bean name
+     * Name of the Spring Bean that must provide {@link Ignite} or {@link IgniteClient} instance for accessing the
+     * Ignite cluster.
      */
     String igniteInstance() default "igniteInstance";
 

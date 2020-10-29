@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -16,12 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.springdata.misc;
+package org.apache.ignite.springdata;
 
-import org.apache.ignite.springdata22.repository.config.RepositoryConfig;
+import org.apache.ignite.springdata.compoundkey.CityRepository;
+import org.apache.ignite.springdata.misc.IgniteClientApplicationConfiguration;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-/** Represents test repository with non-default {@link RepositoryConfig#igniteInstance} value. */
-@RepositoryConfig(igniteInstance = "igniteInstanceTWO", cacheName = "PersonCache")
-public interface PersonRepositoryOtherIgniteInstance extends AbstractPersonRepository {
-    // No-op.
+/** Tests Sping Data operation with compound key when thin client is used for accessing the Ignite cluster. */
+public class IgniteClientSpringDataCompoundKeyTest extends IgniteSpringDataCompoundKeyTest {
+    /** {@inheritDoc} */
+    @Override protected void beforeTestsStarted() throws Exception {
+        ctx = new AnnotationConfigApplicationContext();
+
+        ctx.register(IgniteClientApplicationConfiguration.class);
+        ctx.refresh();
+
+        repo = ctx.getBean(CityRepository.class);
+    }
 }
