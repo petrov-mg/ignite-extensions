@@ -35,8 +35,9 @@ import org.jetbrains.annotations.Nullable;
 
 import static java.util.Collections.emptySet;
 import static org.apache.ignite.cache.CachePeekMode.PRIMARY;
+import static org.apache.ignite.springdata22.repository.support.IgniteRepositoryImpl.toValueIterable;
 
-/** Represents implementation of {@link IgniteRepository} in which Ignite thin client is used to access the cluster. */
+/** Represents implementation of {@link IgniteRepository} in which Ignite data is acessed through {@link ClientCache}. */
 public class IgniteClientRepository<V, K extends Serializable> implements IgniteRepository<V, K> {
     /** Error message indicating that operation is unsupported when thin client is used for accesing the Ignite cluster. */
     private static final String UNSUPPORTED_ERR_MSG = "Operation is unsupported when a thin client is used for " +
@@ -116,25 +117,7 @@ public class IgniteClientRepository<V, K extends Serializable> implements Ignite
 
     /** {@inheritDoc} */
     @Override public Iterable<V> findAll() {
-        final Iterator<Cache.Entry<K, V>> iter = cache.<Cache.Entry<K, V>>query(new ScanQuery<>()).getAll().iterator();
-
-        return new Iterable<V>() {
-            @Override public Iterator<V> iterator() {
-                return new Iterator<V>() {
-                    @Override public boolean hasNext() {
-                        return iter.hasNext();
-                    }
-
-                    @Override public V next() {
-                        return iter.next().getValue();
-                    }
-
-                    @Override public void remove() {
-                        iter.remove();
-                    }
-                };
-            }
-        };
+        return toValueIterable(cache.<Cache.Entry<K, V>>query(new ScanQuery<>()).getAll().iterator());
     }
 
     /** {@inheritDoc} */

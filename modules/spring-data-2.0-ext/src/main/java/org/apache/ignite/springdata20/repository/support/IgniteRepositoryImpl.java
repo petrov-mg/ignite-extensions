@@ -133,29 +133,7 @@ public class IgniteRepositoryImpl<V, K extends Serializable> implements IgniteRe
 
     /** {@inheritDoc} */
     @Override public Iterable<V> findAll() {
-        final Iterator<Cache.Entry<K, V>> iter = cache.iterator();
-
-        return new Iterable<V>() {
-            /** */
-            @Override public Iterator<V> iterator() {
-                return new Iterator<V>() {
-                    /** {@inheritDoc} */
-                    @Override public boolean hasNext() {
-                        return iter.hasNext();
-                    }
-
-                    /** {@inheritDoc} */
-                    @Override public V next() {
-                        return iter.next().getValue();
-                    }
-
-                    /** {@inheritDoc} */
-                    @Override public void remove() {
-                        iter.remove();
-                    }
-                };
-            }
-        };
+        return toValueIterable(cache.iterator());
     }
 
     /** {@inheritDoc} */
@@ -217,5 +195,22 @@ public class IgniteRepositoryImpl<V, K extends Serializable> implements IgniteRe
     /** {@inheritDoc} */
     @Override public void deleteAll() {
         cache.clear();
+    }
+
+    /** Transforms iterator to {@link Iterable} over {@link Cache.Entry} values. */
+    static <K, V> Iterable<V> toValueIterable(Iterator<Cache.Entry<K, V>> iter) {
+        return () -> new Iterator<V>() {
+            @Override public boolean hasNext() {
+                return iter.hasNext();
+            }
+
+            @Override public V next() {
+                return iter.next().getValue();
+            }
+
+            @Override public void remove() {
+                iter.remove();
+            }
+        };
     }
 }

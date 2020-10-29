@@ -67,14 +67,14 @@ public class IgniteRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
     /** {@inheritDoc} */
     @Override protected RepositoryFactorySupport createRepositoryFactory() {
         try {
-            Object clusterAccesser = ctx.getBean("igniteInstance");
+            Object ignite = ctx.getBean("igniteInstance");
 
-            Assert.isTrue(clusterAccesser instanceof IgniteClient || clusterAccesser instanceof Ignite,
+            Assert.isTrue(ignite instanceof IgniteClient || ignite instanceof Ignite,
                 "Invalid repository configuration. The Spring Bean corresponding to the" +
                     " \"igniteInstance\" property of repository configuration must be one of the following types:" +
                     " \"org.apache.ignite.Ignite\", \"org.apache.ignite.client.IgniteClient\"");
 
-            return new IgniteRepositoryFactory(clusterAccesser);
+            return new IgniteRepositoryFactory(ignite);
 
         }
         catch (BeansException ex) {

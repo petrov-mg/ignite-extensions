@@ -18,7 +18,6 @@
 package org.apache.ignite.springdata.repository.support;
 
 import java.io.Serializable;
-import java.util.Iterator;
 import java.util.Map;
 import javax.cache.Cache;
 import org.apache.ignite.IgniteCache;
@@ -28,8 +27,9 @@ import org.apache.ignite.client.ClientCache;
 import org.apache.ignite.springdata.repository.IgniteRepository;
 
 import static org.apache.ignite.springdata.repository.support.IgniteRepositoryImpl.toSet;
+import static org.apache.ignite.springdata.repository.support.IgniteRepositoryImpl.toValueIterable;
 
-/** Represents implementation of {@link IgniteRepository} in which Ignite thin client is used to access the cluster. */
+/** Represents implementation of {@link IgniteRepository} in which Ignite data is acessed through {@link ClientCache}. */
 public class IgniteClientRepository<T, ID extends Serializable> implements IgniteRepository<T, ID> {
     /** {@link IgniteCache} bound to the repository. */
     private final ClientCache<ID, T> cache;
@@ -75,25 +75,7 @@ public class IgniteClientRepository<T, ID extends Serializable> implements Ignit
 
     /** {@inheritDoc} */
     @Override public Iterable<T> findAll() {
-        final Iterator<Cache.Entry<ID, T>> iter = cache.<Cache.Entry<ID, T>>query(new ScanQuery<>()).getAll().iterator();
-
-        return new Iterable<T>() {
-            @Override public Iterator<T> iterator() {
-                return new Iterator<T>() {
-                    @Override public boolean hasNext() {
-                        return iter.hasNext();
-                    }
-
-                    @Override public T next() {
-                        return iter.next().getValue();
-                    }
-
-                    @Override public void remove() {
-                        iter.remove();
-                    }
-                };
-            }
-        };
+        return toValueIterable(cache.<Cache.Entry<ID, T>>query(new ScanQuery<>()).getAll().iterator());
     }
 
     /** {@inheritDoc} */
