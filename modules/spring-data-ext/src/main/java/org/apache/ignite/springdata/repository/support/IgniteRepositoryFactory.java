@@ -25,12 +25,10 @@ import org.apache.ignite.Ignition;
 import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.configuration.ClientConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.springdata.proxy.IgniteClientProxy;
 import org.apache.ignite.springdata.proxy.IgniteProxy;
 import org.apache.ignite.springdata.proxy.IgniteProxyImpl;
-import org.apache.ignite.springdata.proxy.IgniteClientProxy;
-import org.apache.ignite.springdata.repository.IgniteRepository;
 import org.apache.ignite.springdata.repository.config.Query;
-import org.apache.ignite.springdata.repository.config.RepositoryConfig;
 import org.apache.ignite.springdata.repository.query.IgniteQuery;
 import org.apache.ignite.springdata.repository.query.IgniteQueryGenerator;
 import org.apache.ignite.springdata.repository.query.IgniteRepositoryQuery;
@@ -44,7 +42,6 @@ import org.springframework.data.repository.core.support.RepositoryFactorySupport
 import org.springframework.data.repository.query.EvaluationContextProvider;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.RepositoryQuery;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
@@ -115,24 +112,6 @@ public class IgniteRepositoryFactory extends RepositoryFactorySupport {
     /** {@inheritDoc} */
     @Override protected Class<?> getRepositoryBaseClass(RepositoryMetadata metadata) {
         return IgniteRepositoryImpl.class;
-    }
-
-    /** {@inheritDoc} */
-    @Override protected RepositoryMetadata getRepositoryMetadata(Class<?> repoItf) {
-        Assert.notNull(repoItf, "Repository interface must be set.");
-        Assert.isAssignable(IgniteRepository.class, repoItf, "Repository must implement IgniteRepository interface.");
-
-        RepositoryConfig annotation = repoItf.getAnnotation(RepositoryConfig.class);
-
-        Assert.notNull(annotation, "Set a name of an Apache Ignite cache using @RepositoryConfig annotation to map " +
-            "this repository to the underlying cache.");
-
-        Assert.hasText(annotation.cacheName(), "Set a name of an Apache Ignite cache using @RepositoryConfig " +
-            "annotation to map this repository to the underlying cache.");
-
-        repoToCache.put(repoItf, annotation.cacheName());
-
-        return super.getRepositoryMetadata(repoItf);
     }
 
     /** {@inheritDoc} */

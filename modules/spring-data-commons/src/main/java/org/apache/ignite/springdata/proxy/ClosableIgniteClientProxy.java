@@ -15,14 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.springdata.misc;
+package org.apache.ignite.springdata.proxy;
 
-import java.io.Serializable;
-import org.apache.ignite.configuration.ClientConfiguration;
-import org.apache.ignite.springdata22.repository.IgniteRepository;
-import org.apache.ignite.springdata22.repository.config.RepositoryConfig;
+import org.apache.ignite.client.IgniteClient;
 
-/** Repository for testing repository configurion approach through {@link ClientConfiguration}. */
-public interface IgniteClientConfigRepository  {
-    // No-op.
+/** */
+public class ClosableIgniteClientProxy extends IgniteClientProxy implements AutoCloseable {
+    /**
+     * @param cli
+     */
+    public ClosableIgniteClientProxy(IgniteClient cli) {
+        super(cli);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void close() throws Exception {
+        cli.close();
+    }
 }

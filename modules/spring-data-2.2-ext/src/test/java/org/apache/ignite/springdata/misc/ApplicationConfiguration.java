@@ -63,9 +63,30 @@ public class ApplicationConfiguration {
         return new SamplePassParamExtension();
     }
 
-    /**
+    @Bean
+    public IgniteConfiguration igniteConfiguration() {
+        IgniteConfiguration cfg = new IgniteConfiguration();
+
+        cfg.setIgniteInstanceName(IGNITE_INSTANCE_ONE);
+
+        CacheConfiguration ccfg = new CacheConfiguration("PersonCache");
+
+        ccfg.setIndexedTypes(Integer.class, Person.class);
+
+        cfg.setCacheConfiguration(ccfg);
+
+        TcpDiscoverySpi spi = new TcpDiscoverySpi();
+
+        spi.setIpFinder(new TcpDiscoveryVmIpFinder(true));
+
+        cfg.setDiscoverySpi(spi);
+
+        return cfg;
+    }
+
+   /* *//**
      * Ignite instance bean - no instance name provided on RepositoryConfig
-     */
+     *//*
     @Bean
     public Ignite igniteInstance() {
         IgniteConfiguration cfg = new IgniteConfiguration();
@@ -85,7 +106,7 @@ public class ApplicationConfiguration {
         cfg.setDiscoverySpi(spi);
 
         return Ignition.start(cfg);
-    }
+    }*/
 
     /**
      * Ignite instance bean with not default name

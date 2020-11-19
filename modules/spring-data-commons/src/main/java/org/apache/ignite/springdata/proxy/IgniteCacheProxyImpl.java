@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 /** Implementation of {@link IgniteCacheProxy} that provides access to Ignite cache through {@link IgniteCache} instance. */
 public class IgniteCacheProxyImpl<K, V> implements IgniteCacheProxy<K, V> {
     /** {@link IgniteCache} instance to which operations are delegated. */
-    private final IgniteCache<K, V> cache;
+    protected final IgniteCache<K, V> cache;
 
     /** */
     public IgniteCacheProxyImpl(IgniteCache<K, V> cache) {

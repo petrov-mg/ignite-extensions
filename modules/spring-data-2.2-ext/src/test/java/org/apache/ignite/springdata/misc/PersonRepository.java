@@ -25,6 +25,8 @@ import javax.cache.Cache;
 import org.apache.ignite.springdata22.repository.IgniteRepository;
 import org.apache.ignite.springdata22.repository.config.Query;
 import org.apache.ignite.springdata22.repository.config.RepositoryConfig;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.query.Param;
@@ -32,7 +34,7 @@ import org.springframework.data.repository.query.Param;
 /**
  * Test repository.
  */
-@RepositoryConfig(cacheName = "PersonCache")
+@RepositoryConfig(cacheName = "PersonCache", igniteCfg = "igniteConfiguration")
 public interface PersonRepository extends IgniteRepository<Person, Integer> {
     /** */
     public List<Person> findByFirstName(String val);

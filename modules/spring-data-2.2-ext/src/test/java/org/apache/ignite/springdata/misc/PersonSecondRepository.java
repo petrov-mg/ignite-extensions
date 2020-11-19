@@ -30,8 +30,7 @@ import org.springframework.data.domain.Slice;
 /**
  * Test repository.
  */
-@RepositoryConfig(cacheName = "PersonCache")
-public interface PersonSecondRepository extends IgniteRepository<Person, Integer> {
+public interface PersonSecondRepository {
     /** */
     public Slice<Cache.Entry<Integer, Person>> findBySecondNameIsNot(String val, PageRequest pageReq);
 

@@ -22,6 +22,8 @@ import org.apache.ignite.Ignite;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.springdata22.repository.IgniteRepository;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.data.repository.Repository;
@@ -44,9 +46,12 @@ import org.springframework.data.repository.core.support.RepositoryFactorySupport
  * @param <K> Domain object key, super expects {@link Serializable}.
  */
 public class IgniteRepositoryFactoryBean<T extends Repository<V, K>, V, K extends Serializable>
-    extends RepositoryFactoryBeanSupport<T, V, K> implements ApplicationContextAware {
+    extends RepositoryFactoryBeanSupport<T, V, K> implements ApplicationContextAware, DisposableBean {
     /** */
     private ApplicationContext ctx;
+
+    /** */
+    private IgniteRepositoryFactory factory;
 
     /**
      * @param repoInterface Repository interface.
@@ -62,6 +67,19 @@ public class IgniteRepositoryFactoryBean<T extends Repository<V, K>, V, K extend
 
     /** {@inheritDoc} */
     @Override protected RepositoryFactorySupport createRepositoryFactory() {
-        return new IgniteRepositoryFactory(ctx);
+        return factory = new IgniteRepositoryFactory(ctx);
+    }
+
+
+    /** {@inheritDoc} */
+    @Override public void afterPropertiesSet() {
+        factory.afterPropertiesSet(getObjectType());
+
+        super.afterPropertiesSet();
+    }
+
+    /** {@inheritDoc} */
+    @Override public void destroy() throws Exception {
+        factory.destroy();
     }
 }

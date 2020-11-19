@@ -24,9 +24,7 @@ import org.apache.ignite.springdata22.repository.config.RepositoryConfig;
 import org.springframework.stereotype.Repository;
 
 /** City repository */
-@Repository
-@RepositoryConfig(cacheName = "City", autoCreateCache = true)
-public interface CityRepository extends IgniteRepository<City, CityKey> {
+public interface CityRepository {
     /**
      * Find city by id
      * @param id city identifier

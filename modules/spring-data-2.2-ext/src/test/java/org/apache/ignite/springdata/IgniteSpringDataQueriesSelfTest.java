@@ -78,8 +78,8 @@ public class IgniteSpringDataQueriesSelfTest extends GridCommonAbstractTest {
         for (int i = 0; i < CACHE_SIZE; i++) {
             repo.save(i, new Person("person" + Integer.toHexString(i),
                 "lastName" + Integer.toHexString((i + 16) % 256)));
-            repoTWO.save(i, new Person("TWOperson" + Integer.toHexString(i),
-                "lastName" + Integer.toHexString((i + 16) % 256)));
+           /* repoTWO.save(i, new Person("TWOperson" + Integer.toHexString(i),
+                "lastName" + Integer.toHexString((i + 16) % 256)));*/
         }
     }
 

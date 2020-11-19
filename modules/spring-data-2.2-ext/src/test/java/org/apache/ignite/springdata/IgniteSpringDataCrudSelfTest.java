@@ -23,6 +23,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.Ignition;
+import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.springdata.misc.ApplicationConfiguration;
 import org.apache.ignite.springdata.misc.FullNameProjection;
 import org.apache.ignite.springdata.misc.Person;
@@ -310,6 +314,10 @@ public class IgniteSpringDataCrudSelfTest extends GridCommonAbstractTest {
      */
     @Test
     public void testUpdateQueryMixedCase() {
+        ctx.close();
+
+        List<Ignite> ignites = Ignition.allGrids();
+
         final String newSecondName = "updatedUniqueSecondName";
         int cnt = repo.setFixedSecondNameMixedCase(newSecondName, "uniquePerson");
 
