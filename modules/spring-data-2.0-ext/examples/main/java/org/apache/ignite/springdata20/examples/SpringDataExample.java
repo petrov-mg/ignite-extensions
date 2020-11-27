@@ -34,43 +34,45 @@ import org.springframework.data.domain.PageRequest;
  */
 public class SpringDataExample {
     /** Spring Application Context. */
-    private static AnnotationConfigApplicationContext ctx;
+    private AnnotationConfigApplicationContext ctx;
 
     /** Ignite Spring Data repository. */
-    private static PersonRepository repo;
+    private PersonRepository repo;
 
     /**
      * Executes the example.
      * @param args Command line arguments, none required.
      */
     public static void main(String[] args) {
+        SpringDataExample springDataExample = new SpringDataExample();
+
         // Initializing Spring Data context and Ignite repository.
-        igniteSpringDataInit();
+        springDataExample.igniteSpringDataInit();
 
-        populateRepository();
+        springDataExample.populateRepository();
 
-        findPersons();
+        springDataExample.findPersons();
 
-        queryRepository();
+        springDataExample.queryRepository();
 
         System.out.println("\n>>> Cleaning out the repository...");
 
-        repo.deleteAll();
+        springDataExample.repo.deleteAll();
 
-        System.out.println("\n>>> Repository size: " + repo.count());
+        System.out.println("\n>>> Repository size: " + springDataExample.repo.count());
 
         // Destroying the context.
-        ctx.destroy();
+        springDataExample.ctx.close();
     }
 
     /**
      * Initializes Spring Data and Ignite repositories.
      */
-    private static void igniteSpringDataInit() {
+    private void igniteSpringDataInit() {
         ctx = new AnnotationConfigApplicationContext();
 
         // Explicitly registering Spring configuration.
-        ctx.register(SpringApplicationConfiguration.class);
+        ctx.register(springApplicationConfiguration());
 
         ctx.refresh();
 
@@ -81,7 +83,7 @@ public class SpringDataExample {
     /**
      * Fills the repository in with sample data.
      */
-    private static void populateRepository() {
+    private void populateRepository() {
         TreeMap<Long, Person> persons = new TreeMap<>();
 
         persons.put(1L, new Person(1L, 2000L, "John", "Smith", 15000, "Worked for Apple"));
@@ -102,7 +104,7 @@ public class SpringDataExample {
     /**
      * Gets a list of Persons using standard read operations.
      */
-    private static void findPersons() {
+    private void findPersons() {
         // Getting Person with specific ID.
         Person person = repo.findById(2L).orElse(null);
 
@@ -126,7 +128,7 @@ public class SpringDataExample {
     /**
      * Execute advanced queries over the repository.
      */
-    private static void queryRepository() {
+    private void queryRepository() {
         System.out.println("\n>>> Persons with name 'John':");
 
         List<Person> persons = repo.findByFirstName("John");
@@ -146,5 +148,10 @@ public class SpringDataExample {
 
         for (Long id: ids)
             System.out.println("   >>>   [id=" + id + "]");
+    }
+
+    /** */
+    protected Class<?> springApplicationConfiguration() {
+        return SpringApplicationConfiguration.class;
     }
 }
