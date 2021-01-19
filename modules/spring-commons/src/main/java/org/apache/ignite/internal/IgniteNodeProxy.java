@@ -15,32 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.springdata.proxy;
+package org.apache.ignite.internal;
 
 import java.util.Objects;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.internal.cache.proxy.IgniteCacheProxy;
+import org.apache.ignite.internal.cache.proxy.IgniteNodeCacheProxy;
 
 /** Implementation of {@link IgniteProxy} that provides access to Ignite cluster through {@link Ignite} instance. */
-public class IgniteProxyImpl implements IgniteProxy {
+public class IgniteNodeProxy implements IgniteProxy {
     /** {@link Ignite} instance to which operations are delegated. */
     protected final Ignite ignite;
 
     /** */
-    public IgniteProxyImpl(Ignite ignite) {
+    public IgniteNodeProxy(Ignite ignite) {
         this.ignite = ignite;
     }
 
     /** {@inheritDoc} */
     @Override public <K, V> IgniteCacheProxy<K, V> getOrCreateCache(String name) {
-        return new IgniteCacheProxyImpl<>(ignite.getOrCreateCache(name));
+        return new IgniteNodeCacheProxy<>(ignite.getOrCreateCache(name));
     }
 
     /** {@inheritDoc} */
     @Override public <K, V> IgniteCacheProxy<K, V> cache(String name) {
         IgniteCache<K, V> cache = ignite.cache(name);
 
-        return cache == null ? null : new IgniteCacheProxyImpl<>(cache);
+        return cache == null ? null : new IgniteNodeCacheProxy<>(cache);
     }
 
     /** @return {@link Ignite} instance to which operations are delegated. */
@@ -56,7 +58,7 @@ public class IgniteProxyImpl implements IgniteProxy {
         if (other == null || getClass() != other.getClass())
             return false;
 
-        return Objects.equals(ignite, ((IgniteProxyImpl)other).ignite);
+        return Objects.equals(ignite, ((IgniteNodeProxy)other).ignite);
     }
 
     /** {@inheritDoc} */

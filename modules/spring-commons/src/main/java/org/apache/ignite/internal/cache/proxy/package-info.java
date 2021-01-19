@@ -15,21 +15,8 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.springdata.proxy;
-
-import org.apache.ignite.client.IgniteClient;
-
-/** Extends {@link IgniteClientProxy} with the ability to close underlying thin client instance. */
-public class ClosableIgniteClientProxy extends IgniteClientProxy implements AutoCloseable {
-    /**
-     * @param cli Ignite client instance.
-     */
-    public ClosableIgniteClientProxy(IgniteClient cli) {
-        super(cli);
-    }
-
-    /** {@inheritDoc} */
-    @Override public void close() throws Exception {
-        cli.close();
-    }
-}
+/**
+ * <!-- Package description. -->
+ * Contains classes that provide client-independent access to the Ignite operations required by Spring Data.
+ */
+package org.apache.ignite.internal.cache.proxy;

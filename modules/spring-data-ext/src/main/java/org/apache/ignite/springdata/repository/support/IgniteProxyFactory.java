@@ -17,7 +17,7 @@
 
 package org.apache.ignite.springdata.repository.support;
 
-import org.apache.ignite.springdata.proxy.IgniteProxy;
+import org.apache.ignite.internal.IgniteProxy;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 import org.springframework.context.ApplicationContext;

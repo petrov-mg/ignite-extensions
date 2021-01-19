@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.springdata.proxy;
+package org.apache.ignite.internal.cache.proxy;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -31,12 +31,12 @@ import org.apache.ignite.client.ClientException;
 import org.jetbrains.annotations.NotNull;
 
 /** Implementation of {@link IgniteCacheProxy} that provides access to Ignite cache through {@link ClientCache} instance. */
-public class IgniteCacheClientProxy<K, V> implements IgniteCacheProxy<K, V> {
+public class IgniteClientCacheProxy<K, V> implements IgniteCacheProxy<K, V> {
     /** {@link ClientCache} instance to which operations are delegated. */
     private final ClientCache<K, V> cache;
 
     /** */
-    public IgniteCacheClientProxy(ClientCache<K, V> cache) {
+    public IgniteClientCacheProxy(ClientCache<K, V> cache) {
         this.cache = cache;
     }
 
@@ -82,7 +82,7 @@ public class IgniteCacheClientProxy<K, V> implements IgniteCacheProxy<K, V> {
 
     /** {@inheritDoc} */
     @Override public IgniteCacheProxy<K, V> withExpiryPolicy(ExpiryPolicy expirePlc) {
-        return new IgniteCacheClientProxy<>(cache.withExpirePolicy(expirePlc));
+        return new IgniteClientCacheProxy<>(cache.withExpirePolicy(expirePlc));
     }
 
     /** {@inheritDoc} */

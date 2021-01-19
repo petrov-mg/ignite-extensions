@@ -17,8 +17,8 @@
 package org.apache.ignite.springdata22.repository.support;
 
 import java.util.Optional;
-import org.apache.ignite.springdata.proxy.IgniteCacheProxy;
-import org.apache.ignite.springdata.proxy.IgniteProxy;
+import org.apache.ignite.internal.cache.proxy.IgniteCacheProxy;
+import org.apache.ignite.internal.IgniteProxy;
 import org.apache.ignite.springdata22.repository.config.DynamicQueryConfig;
 import org.apache.ignite.springdata22.repository.config.Query;
 import org.apache.ignite.springdata22.repository.config.RepositoryConfig;

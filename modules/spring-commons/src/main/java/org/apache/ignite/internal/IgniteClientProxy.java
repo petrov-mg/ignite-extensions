@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.springdata.proxy;
+package org.apache.ignite.internal;
 
 import java.util.Objects;
 import org.apache.ignite.client.IgniteClient;
+import org.apache.ignite.internal.cache.proxy.IgniteCacheProxy;
+import org.apache.ignite.internal.cache.proxy.IgniteClientCacheProxy;
 
 /** Implementation of {@link IgniteProxy} that provides access to Ignite cluster through {@link IgniteClient} instance. */
 public class IgniteClientProxy implements IgniteProxy {
@@ -32,12 +34,12 @@ public class IgniteClientProxy implements IgniteProxy {
 
     /** {@inheritDoc} */
     @Override public <K, V> IgniteCacheProxy<K, V> getOrCreateCache(String name) {
-        return new IgniteCacheClientProxy<>(cli.getOrCreateCache(name));
+        return new IgniteClientCacheProxy<>(cli.getOrCreateCache(name));
     }
 
     /** {@inheritDoc} */
     @Override public <K, V> IgniteCacheProxy<K, V> cache(String name) {
-        return new IgniteCacheClientProxy<>(cli.cache(name));
+        return new IgniteClientCacheProxy<>(cli.cache(name));
     }
 
     /** {@inheritDoc} */

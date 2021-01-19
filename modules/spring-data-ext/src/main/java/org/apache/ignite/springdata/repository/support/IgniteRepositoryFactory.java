@@ -18,8 +18,8 @@ package org.apache.ignite.springdata.repository.support;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
-import org.apache.ignite.springdata.proxy.IgniteCacheProxy;
-import org.apache.ignite.springdata.proxy.IgniteProxy;
+import org.apache.ignite.internal.cache.proxy.IgniteCacheProxy;
+import org.apache.ignite.internal.IgniteProxy;
 import org.apache.ignite.springdata.repository.config.Query;
 import org.apache.ignite.springdata.repository.config.RepositoryConfig;
 import org.apache.ignite.springdata.repository.query.IgniteQuery;

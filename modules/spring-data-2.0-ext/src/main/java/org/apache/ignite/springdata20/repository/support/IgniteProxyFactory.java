@@ -21,7 +21,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.ignite.springdata.proxy.IgniteProxy;
+import org.apache.ignite.internal.IgniteProxy;
 import org.apache.ignite.springdata20.repository.config.RepositoryConfig;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;

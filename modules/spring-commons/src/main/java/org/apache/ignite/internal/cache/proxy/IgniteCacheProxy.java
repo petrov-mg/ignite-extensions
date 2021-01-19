@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.springdata.proxy;
+package org.apache.ignite.internal.cache.proxy;
 
 import java.util.Map;
 import java.util.Set;

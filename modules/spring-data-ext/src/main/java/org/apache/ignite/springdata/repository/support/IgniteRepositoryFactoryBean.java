@@ -22,7 +22,7 @@ import org.apache.ignite.Ignite;
 import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.configuration.ClientConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.springdata.proxy.IgniteProxy;
+import org.apache.ignite.internal.IgniteProxy;
 import org.apache.ignite.springdata.repository.IgniteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.Repository;
