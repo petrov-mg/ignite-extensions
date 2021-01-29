@@ -108,4 +108,19 @@ public interface IgniteCacheProxy<K, V> extends Iterable<Cache.Entry<K, V>> {
      * @return <tt>true</tt> if this map contains a mapping for the specified key.
      */
     public boolean containsKey(K key);
+
+    /** */
+    public String getName();
+
+    /** */
+    public IgniteCacheProxy<K, V> withSkipStore();
+
+    /** */
+    public V getAndPutIfAbsent(K key, V val);
+
+    /** */
+    public void removeAll();
+
+    /** */
+    public Object delegate();
 }
