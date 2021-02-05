@@ -21,11 +21,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.client.ClientCache;
 import org.apache.ignite.client.ClientCacheConfiguration;
 import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.configuration.ClientConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.A;
+import org.apache.ignite.springdata.proxy.IgniteCacheClientProxy;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 
@@ -40,16 +44,43 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
  * <pre name="code" class="xml">
  * &lt;beans xmlns="http://www.springframework.org/schema/beans"
  *        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
- *        xmlns:tx="http://www.springframework.org/schema/tx"
+ *        xmlns:cache="http://www.springframework.org/schema/cache"
  *        xsi:schemaLocation="
  *            http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
- *            http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd"&gt;
- *     &lt;-- Provide Ignite client instance. --&gt;
+ *            http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd"&gt;
+ *     &lt;!-- Provide Ignite client instance. --&gt;
  *     &lt;bean id="cacheManager" class="org.apache.ignite.cache.spring.IgniteClientSpringCacheManager"&gt;
  *         &lt;property name="clientInstance" ref="igniteClientBean"/&gt;
  *     &lt;/bean>
  *
- *     &lt;-- Use annotation-driven cache configuration. --&gt;
+ *     &lt;!-- Use annotation-driven cache configuration. --&gt;
+ *     &lt;cache:annotation-driven/&gt;
+ * &lt;/beans&gt;
+ * </pre>
+ *
+ * Or you can provide Ignite client configuration, like below:
+ *
+ * <pre name="code" class="xml">
+ * &lt;beans xmlns="http://www.springframework.org/schema/beans"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ *        xmlns:cache="http://www.springframework.org/schema/cache"
+ *        xsi:schemaLocation="
+ *            http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+ *            http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd"&gt;
+ *     &lt;!-- Provide Ignite client instance. --&gt;
+ *     &lt;bean id="cacheManager" class="org.apache.ignite.cache.spring.IgniteClientSpringCacheManager"&gt;
+ *         &lt;property name="clientConfiguration"&gt;
+ *             &lt;bean class="org.apache.ignite.configuration.ClientConfiguration"&gt;
+ *             &lt;property name="addresses"&gt;
+ *                 &lt;list&gt;
+ *                     &lt;value&gt;127.0.0.1:10800&lt;/value&gt;
+ *                 &lt;/list&gt;
+ *             &lt;/property&gt;
+ *         &lt;/bean&gt;
+ *         &lt;/property&gt;
+ *     &lt;/bean>
+ *
+ *     &lt;!-- Use annotation-driven cache configuration. --&gt;
  *     &lt;cache:annotation-driven/&gt;
  * &lt;/beans&gt;
  * </pre>
@@ -95,7 +126,7 @@ public class IgniteClientSpringCacheManager extends AbstractCacheManager impleme
         return this;
     }
 
-    /** Gets configured cache configurations. */
+    /** Gets Ignite cache configurations. */
     public Collection<ClientCacheConfiguration> getCacheConfigurations() {
         return ccfgs == null ? Collections.emptyList() : ccfgs.values();
     }
@@ -127,12 +158,14 @@ public class IgniteClientSpringCacheManager extends AbstractCacheManager impleme
     }
 
     /** {@inheritDoc} */
-    @Override protected AbstractSpringCache createCache(String name) {
+    @Override protected SpringCache createCache(String name) {
         ClientCacheConfiguration ccfg = ccfgs == null ? null : ccfgs.get(name);
 
-        return new IgniteClientSpringCache(cli.getOrCreateCache(ccfg == null
+        ClientCache<Object, Object> cache = cli.getOrCreateCache(ccfg == null
             ? new ClientCacheConfiguration().setName(name)
-            : ccfg));
+            : ccfg);
+
+        return new SpringCache(new IgniteCacheClientProxy<>(cache), this);
     }
 
     /** {@inheritDoc} */
@@ -142,7 +175,7 @@ public class IgniteClientSpringCacheManager extends AbstractCacheManager impleme
 
         if (cliCfg == null) {
             throw new IllegalArgumentException("Neither client instance nor client configuration is specified." +
-                " Set the 'igniteClientInstance' property if you already have an Ignite client instance running," +
+                " Set the 'clientInstance' property if you already have an Ignite client instance running," +
                 " or set the 'clientConfiguration' property if the Ignite client instance need to be started" +
                 " implicitly by the manager.");
         }
@@ -154,5 +187,10 @@ public class IgniteClientSpringCacheManager extends AbstractCacheManager impleme
     @Override public void destroy() throws Exception {
         if (!externalCliInstance)
             cli.close();
+    }
+
+    /** {@inheritDoc} */
+    @Override protected Lock createLock(int id) {
+        return new ReentrantLock();
     }
 }

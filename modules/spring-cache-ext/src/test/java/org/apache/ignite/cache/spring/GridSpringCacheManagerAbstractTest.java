@@ -41,7 +41,7 @@ public abstract class GridSpringCacheManagerAbstractTest extends GridCommonAbstr
      */
     static {
         try {
-            NULL = U.field(AbstractSpringCache.class, "NULL");
+            NULL = U.field(SpringCache.class, "NULL");
         }
         catch (IgniteCheckedException e) {
             throw new RuntimeException(e);

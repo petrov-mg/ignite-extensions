@@ -17,6 +17,9 @@
 
 package org.apache.ignite.cache.spring;
 
+import java.util.Collection;
+import java.util.concurrent.CyclicBarrier;
+import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.client.ClientCacheConfiguration;
 import org.apache.ignite.client.IgniteClient;
@@ -26,6 +29,7 @@ import org.apache.ignite.configuration.ClientConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.testframework.GridTestUtils;
 import org.junit.Test;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.KeyGenerator;
@@ -33,13 +37,14 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import static org.apache.ignite.configuration.ClientConnectorConfiguration.DFLT_PORT;
 
 /** Tests Spring Cache manager implementation that uses thin client to connect to the Ignite cluster. */
 public class IgniteClientSpringCacheManagerTest extends GridSpringCacheManagerAbstractTest {
     /** */
-    private AnnotationConfigApplicationContext ctx;
+    private AbstractApplicationContext ctx;
 
     /** {@inheritDoc} */
     @Override protected IgniteConfiguration getConfiguration(String igniteInstanceName) throws Exception {
@@ -144,6 +149,64 @@ public class IgniteClientSpringCacheManagerTest extends GridSpringCacheManagerAb
             },
             IllegalArgumentException.class,
             "Cache name must not be null");
+    }
+
+    /** Tests {@link IgniteClientSpringCacheManager} configuration approach through XML file. */
+    @Test
+    public void testCacheManagerXmlConfiguration() {
+        try (
+            AbstractApplicationContext ctx = new ClassPathXmlApplicationContext(
+                "org/apache/ignite/cache/spring/ignite-client-spring-caching.xml")
+        ) {
+            IgniteClientSpringCacheManager mgr = ctx.getBean(IgniteClientSpringCacheManager.class);
+
+            assertNotNull(mgr.getClientConfiguration());
+
+            IgniteClient cli = mgr.getClientInstance();
+
+            assertNotNull(cli);
+            assertEquals(1, cli.cluster().nodes().size());
+
+            Collection<ClientCacheConfiguration> cfgs = mgr.getCacheConfigurations();
+
+            assertEquals(1, cfgs.size());
+
+            ClientCacheConfiguration cfg = cfgs.iterator().next();
+
+            assertEquals(DYNAMIC_CACHE_NAME, cfg.getName());
+            assertEquals(2, cfg.getBackups());
+        }
+    }
+
+    /** Test {@link Cacheable} annotation with {@code sync} mode enabled. */
+    @Test
+    public void testSyncMode() throws Exception {
+        final int threads = 4;
+        final int entries = 1000;
+
+        final CyclicBarrier barrier = new CyclicBarrier(threads);
+
+        GridTestUtils.runMultiThreaded(
+            () -> {
+                for (int i = 0; i < entries; i++) {
+                    barrier.await();
+
+                    assertEquals("value" + i, dynamicSvc.cacheableSync(i));
+                    assertEquals("value" + i, dynamicSvc.cacheableSync(i));
+                }
+
+                return null;
+            },
+            threads,
+            "get-sync");
+
+        IgniteCache<Object, Object> cache = grid().cache(DYNAMIC_CACHE_NAME);
+
+        assertEquals(entries, cache.size());
+        assertEquals(entries, dynamicSvc.called());
+
+        for (int i = 0; i < entries; i++)
+            assertEquals("value" + i, cache.get(i));
     }
 
     /** */

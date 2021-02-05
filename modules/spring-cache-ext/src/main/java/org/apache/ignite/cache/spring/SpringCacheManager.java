@@ -17,17 +17,18 @@
 
 package org.apache.ignite.cache.spring;
 
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
 import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
-import org.apache.ignite.IgniteLock;
 import org.apache.ignite.IgniteSpring;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.NearCacheConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.springdata.proxy.IgniteCacheProxyImpl;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -139,9 +140,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
  * in caching the data.
  */
 public class SpringCacheManager extends AbstractCacheManager implements ApplicationListener<ContextRefreshedEvent>, ApplicationContextAware, DisposableBean {
-    /** Default locks count. */
-    private static final int DEFAULT_LOCKS_COUNT = 512;
-
     /** IgniteLock name prefix. */
     private static final String SPRING_LOCK_NAME_PREFIX = "springSync";
 
@@ -154,9 +152,6 @@ public class SpringCacheManager extends AbstractCacheManager implements Applicat
     /** Ignite instance name. */
     private String igniteInstanceName;
 
-    /** Count of IgniteLocks are used for sync get */
-    private int locksCnt = DEFAULT_LOCKS_COUNT;
-
     /** Dynamic cache configuration template. */
     private CacheConfiguration<Object, Object> dynamicCacheCfg;
 
@@ -168,9 +163,6 @@ public class SpringCacheManager extends AbstractCacheManager implements Applicat
 
     /** Spring context. */
     private ApplicationContext springCtx;
-
-    /** Locks for value loading to support sync option. */
-    private ConcurrentHashMap<Integer, IgniteLock> locks = new ConcurrentHashMap<>();
 
     /** Flag that indicates whether external Ignite instance is configured. */
     private boolean externalIgniteInstance;
@@ -257,22 +249,6 @@ public class SpringCacheManager extends AbstractCacheManager implements Applicat
     }
 
     /**
-     * Gets locks count.
-     *
-     * @return locks count.
-     */
-    public int getLocksCount() {
-        return locksCnt;
-    }
-
-    /**
-     * @param locksCnt locks count.
-     */
-    public void setLocksCount(int locksCnt) {
-        this.locksCnt = locksCnt;
-    }
-
-    /**
      * Gets dynamic cache configuration template.
      *
      * @return Dynamic cache configuration template.
@@ -338,7 +314,7 @@ public class SpringCacheManager extends AbstractCacheManager implements Applicat
     }
 
     /** {@inheritDoc} */
-    @Override protected AbstractSpringCache createCache(String name) {
+    @Override protected SpringCache createCache(String name) {
         CacheConfiguration<Object, Object> cacheCfg = dynamicCacheCfg != null ?
             new CacheConfiguration<>(dynamicCacheCfg) : new CacheConfiguration<>();
 
@@ -347,23 +323,16 @@ public class SpringCacheManager extends AbstractCacheManager implements Applicat
 
         cacheCfg.setName(name);
 
-        return new SpringCache(nearCacheCfg != null ? ignite.getOrCreateCache(cacheCfg, nearCacheCfg) :
-            ignite.getOrCreateCache(cacheCfg), this);
+        IgniteCache<Object, Object> cache = nearCacheCfg != null
+            ? ignite.getOrCreateCache(cacheCfg, nearCacheCfg)
+            : ignite.getOrCreateCache(cacheCfg);
+
+        return new SpringCache(new IgniteCacheProxyImpl<>(cache), this);
     }
 
-    /**
-     * Provides {@link org.apache.ignite.IgniteLock} for specified cache name and key.
-     *
-     * @param name cache name
-     * @param key  key
-     * @return {@link org.apache.ignite.IgniteLock}
-     */
-    IgniteLock getSyncLock(String name, Object key) {
-        int hash = Objects.hash(name, key);
-
-        final int idx = hash % getLocksCount();
-
-        return locks.computeIfAbsent(idx, i -> ignite.reentrantLock(SPRING_LOCK_NAME_PREFIX + idx, true, false, true));
+    /** {@inheritDoc} */
+    @Override protected Lock createLock(int id) {
+        return ignite.reentrantLock(SPRING_LOCK_NAME_PREFIX + id, true, false, true);
     }
 
     /** {@inheritDoc} */
