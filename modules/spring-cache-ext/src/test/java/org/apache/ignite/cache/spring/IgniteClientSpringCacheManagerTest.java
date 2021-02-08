@@ -18,8 +18,6 @@
 package org.apache.ignite.cache.spring;
 
 import java.util.Collection;
-import java.util.concurrent.CyclicBarrier;
-import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.client.ClientCacheConfiguration;
 import org.apache.ignite.client.IgniteClient;
@@ -180,33 +178,18 @@ public class IgniteClientSpringCacheManagerTest extends GridSpringCacheManagerAb
 
     /** Test {@link Cacheable} annotation with {@code sync} mode enabled. */
     @Test
-    public void testSyncMode() throws Exception {
-        final int threads = 4;
-        final int entries = 1000;
-
-        final CyclicBarrier barrier = new CyclicBarrier(threads);
-
-        GridTestUtils.runMultiThreaded(
+    public void testSyncMode() {
+        GridTestUtils.assertThrowsAnyCause(
+            log,
             () -> {
-                for (int i = 0; i < entries; i++) {
-                    barrier.await();
-
-                    assertEquals("value" + i, dynamicSvc.cacheableSync(i));
-                    assertEquals("value" + i, dynamicSvc.cacheableSync(i));
-                }
+                dynamicSvc.cacheableSync(0);
 
                 return null;
             },
-            threads,
-            "get-sync");
-
-        IgniteCache<Object, Object> cache = grid().cache(DYNAMIC_CACHE_NAME);
-
-        assertEquals(entries, cache.size());
-        assertEquals(entries, dynamicSvc.called());
-
-        for (int i = 0; i < entries; i++)
-            assertEquals("value" + i, cache.get(i));
+            UnsupportedOperationException.class,
+            "SYNC mode is not supported for Ignite Spring Cache integration when using a thin client to connect" +
+                " to the Ignite cluster."
+        );
     }
 
     /** */

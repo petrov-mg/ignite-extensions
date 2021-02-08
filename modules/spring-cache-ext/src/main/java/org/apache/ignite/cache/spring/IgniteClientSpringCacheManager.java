@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.client.ClientCache;
 import org.apache.ignite.client.ClientCacheConfiguration;
@@ -190,7 +189,9 @@ public class IgniteClientSpringCacheManager extends AbstractCacheManager impleme
     }
 
     /** {@inheritDoc} */
-    @Override protected Lock createLock(int id) {
-        return new ReentrantLock();
+    @Override protected Lock getSyncLock(String cache, Object key) {
+        throw new UnsupportedOperationException(
+            "SYNC mode is not supported for Ignite Spring Cache integration when using a thin client to connect to the" +
+                " Ignite cluster.");
     }
 }

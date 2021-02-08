@@ -24,7 +24,9 @@ import org.apache.ignite.springdata.proxy.IgniteCacheProxy;
 import org.springframework.cache.Cache;
 import org.springframework.cache.support.SimpleValueWrapper;
 
-/** Represents {@link Cache} implementation that delegates operations to specified {@link IgniteCacheProxy}. */
+/**
+ * Spring cache implementation.
+ */
 class SpringCache implements Cache {
     /** */
     private static final Object NULL = new NullValue();
@@ -82,7 +84,7 @@ class SpringCache implements Cache {
         Object val = cache.get(key);
 
         if (val == null) {
-            Lock lock = mgr.getLock(cache.getName(), key);
+            Lock lock = mgr.getSyncLock(cache.getName(), key);
 
             lock.lock();
 
