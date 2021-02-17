@@ -188,7 +188,7 @@ public class IgniteClientSpringCacheManagerTest extends GridSpringCacheManagerAb
             },
             UnsupportedOperationException.class,
             "SYNC mode is not supported for Ignite Spring Cache integration when using a thin client to connect" +
-                " to the Ignite cluster."
+                " to an Ignite cluster."
         );
     }
 

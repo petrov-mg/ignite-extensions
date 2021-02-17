@@ -30,7 +30,8 @@ import org.apache.ignite.configuration.ClientConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.A;
 import org.apache.ignite.springdata.proxy.IgniteCacheClientProxy;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 
 /**
  * Represents implementation of {@link AbstractCacheManager} that uses thin client to connect to an Ignite cluster
@@ -47,9 +48,21 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
  *        xsi:schemaLocation="
  *            http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
  *            http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd"&gt;
+ *     &lt;bean id="igniteClient" class="org.apache.ignite.IgniteClientSpringBean"&gt;
+ *         &lt;property name="clientConfiguration"&gt;
+ *             &lt;bean class="org.apache.ignite.configuration.ClientConfiguration"&gt;
+ *             &lt;property name="addresses"&gt;
+ *                 &lt;list&gt;
+ *                     &lt;value&gt;127.0.0.1:10800&lt;/value&gt;
+ *                 &lt;/list&gt;
+ *             &lt;/property&gt;
+ *         &lt;/bean&gt;
+ *         &lt;/property&gt;
+ *     &lt;/bean>
+ *
  *     &lt;!-- Provide Ignite client instance. --&gt;
  *     &lt;bean id="cacheManager" class="org.apache.ignite.cache.spring.IgniteClientSpringCacheManager"&gt;
- *         &lt;property name="clientInstance" ref="igniteClientBean"/&gt;
+ *         &lt;property name="clientInstance" ref="igniteClient"/&gt;
  *     &lt;/bean>
  *
  *     &lt;!-- Use annotation-driven cache configuration. --&gt;
@@ -84,7 +97,9 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
  * &lt;/beans&gt;
  * </pre>
  */
-public class IgniteClientSpringCacheManager extends AbstractCacheManager implements DisposableBean, SmartInitializingSingleton {
+public class IgniteClientSpringCacheManager extends AbstractCacheManager implements DisposableBean,
+    ApplicationListener<ContextRefreshedEvent>
+{
     /** Ignite client instance. */
     private IgniteClient cli;
 
@@ -168,21 +183,6 @@ public class IgniteClientSpringCacheManager extends AbstractCacheManager impleme
     }
 
     /** {@inheritDoc} */
-    @Override public void afterSingletonsInstantiated() {
-        if (cli != null)
-            return;
-
-        if (cliCfg == null) {
-            throw new IllegalArgumentException("Neither client instance nor client configuration is specified." +
-                " Set the 'clientInstance' property if you already have an Ignite client instance running," +
-                " or set the 'clientConfiguration' property if the Ignite client instance need to be started" +
-                " implicitly by the manager.");
-        }
-
-        cli = Ignition.startClient(cliCfg);
-    }
-
-    /** {@inheritDoc} */
     @Override public void destroy() throws Exception {
         if (!externalCliInstance)
             cli.close();
@@ -191,7 +191,22 @@ public class IgniteClientSpringCacheManager extends AbstractCacheManager impleme
     /** {@inheritDoc} */
     @Override protected Lock getSyncLock(String cache, Object key) {
         throw new UnsupportedOperationException(
-            "SYNC mode is not supported for Ignite Spring Cache integration when using a thin client to connect to the" +
+            "SYNC mode is not supported for Ignite Spring Cache integration when using a thin client to connect to an" +
                 " Ignite cluster.");
+    }
+
+    /** {@inheritDoc} */
+    @Override public void onApplicationEvent(ContextRefreshedEvent evt) {
+        if (cli != null)
+            return;
+
+        if (cliCfg == null) {
+            throw new IllegalArgumentException("Neither client instance nor client configuration is specified." +
+                " Set the 'clientInstance' property if you already have an Ignite client instance running," +
+                " or set the 'clientConfiguration' property if an Ignite client instance need to be started" +
+                " implicitly by the manager.");
+        }
+
+        cli = Ignition.startClient(cliCfg);
     }
 }
