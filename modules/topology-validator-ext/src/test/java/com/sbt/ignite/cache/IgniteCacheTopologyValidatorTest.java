@@ -27,6 +27,8 @@ import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.DataRegionConfiguration;
+import org.apache.ignite.configuration.DataStorageConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.processors.cache.CacheInvalidStateException;
@@ -64,6 +66,9 @@ public class IgniteCacheTopologyValidatorTest extends IgniteCacheTopologySplitAb
     public static final int CACHE_CNT = 2;
 
     /** */
+    private boolean isPersistenceEnabled;
+
+    /** */
     @Override protected IgniteConfiguration getConfiguration(String igniteInstanceName) throws Exception {
         return getConfiguration(igniteInstanceName, true);
     }
@@ -81,6 +86,12 @@ public class IgniteCacheTopologyValidatorTest extends IgniteCacheTopologySplitAb
         if (configureSegmentationResolverPlugin)
             cfg.setPluginProviders(new CacheTopologyValidatorPluginProvider());
 
+        if (isPersistenceEnabled) {
+            cfg.setDataStorageConfiguration(new DataStorageConfiguration()
+                .setDefaultDataRegionConfiguration(new DataRegionConfiguration()
+                    .setPersistenceEnabled(true)));
+        }
+
         ((TcpDiscoverySpi)cfg.getDiscoverySpi())
             .setIpFinder(sharedStaticIpFinder)
             .setLocalPortRange(1)
@@ -88,6 +99,13 @@ public class IgniteCacheTopologyValidatorTest extends IgniteCacheTopologySplitAb
             .setConnectionRecoveryTimeout(0);
 
         return cfg;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void beforeTest() throws Exception {
+        cleanPersistenceDir();
+
+        super.beforeTest();
     }
 
     /** {@inheritDoc} */
@@ -369,9 +387,11 @@ public class IgniteCacheTopologyValidatorTest extends IgniteCacheTopologySplitAb
     /** */
     @Test
     public void testNodeJoinConcurrentWithLeftRejected() throws Exception {
+        isPersistenceEnabled = true;
+
         IgniteEx srv = startGrids(2);
 
-        grid(0).cluster().baselineAutoAdjustEnabled(false);
+        srv.cluster().state(ACTIVE);
 
         createCaches();
 
@@ -395,7 +415,7 @@ public class IgniteCacheTopologyValidatorTest extends IgniteCacheTopologySplitAb
 
             assertThrowsAnyCause(
                 log,
-                () -> startGrid(3),
+                () -> startGrid(1),
                 IgniteSpiException.class,
                 "Node join request was rejected due to concurrent node left process handling"
             );
